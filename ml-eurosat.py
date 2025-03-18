@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     print(f"Total samples in test_dataset: {len(test_dataset)}")
 
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=0, pin_memory=True)  # Set num_workers=0 to avoid Windows multiprocessing issue
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=2, pin_memory=True)  # Set num_workers=0 to avoid Windows multiprocessing issue
 
     print(f"Total number of batches: {len(test_loader)}")
     print(f"Total samples: {len(test_loader.dataset)}")
@@ -151,9 +151,9 @@ if __name__ == '__main__':
         file_type="tif"
     )
 
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4, pin_memory=True)  # num_workers=0 to avoid multiprocessing issues
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=8, pin_memory=True)  # num_workers=0 to avoid multiprocessing issues
 
-    num_epochs = 20
+    num_epochs = 30
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -174,11 +174,6 @@ if __name__ == '__main__':
         scheduler.step()
 
     print('Finished Training')
-
-    # Save model
-    current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"model_checkpoint_{current_time}.pth"
-    torch.save(model.state_dict(), filename)
 
     # ------------------------
     # Evaluation Loop
@@ -201,5 +196,14 @@ if __name__ == '__main__':
             correct += (predicted == labels).sum().item()
             predictions.extend(predicted.cpu().numpy())
 
+    accuracy = 100 * correct / total
+
     print(f"First 10 test predictions: {predictions[:10]}")
     print(f'Test Accuracy: {100 * correct / total:.2f}%')
+
+    # Save model
+    current_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Create a filename with the current date, time, and accuracy
+    filename = f"model_checkpoint_accuracy_{accuracy:.2f}_{current_time}.pth"
+
+    torch.save(model.state_dict(), os.path.join("./trained_models", filename))
